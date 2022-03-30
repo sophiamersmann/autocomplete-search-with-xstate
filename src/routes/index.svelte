@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createMachine, assign } from 'xstate';
   import { useMachine } from '@xstate/svelte';
+  import { getContext } from 'svelte';
 
   interface AutocompleteSearchContext {
     suggestions: string[];
@@ -173,27 +174,22 @@
   <button type="reset">reset</button>
 </form>
 
-<ul>
-  {#each $state.context.suggestions as suggestion}
-    <button
-      class="suggestion"
-      type="button"
-      on:click={() => send({ type: 'SUBMIT', suggestion })}
-      on:mouseenter={() => send({ type: 'HIGHLIGHT', suggestion })}
-      style:font-weight={$state.context.highlightedSuggestion === suggestion
-        ? 'bold'
-        : 'normal'}
-    >
-      {suggestion}
-    </button>
-  {/each}
+{#if !$state.context.selected}
+  <ul>
+    {#each $state.context.suggestions as suggestion}
+      <button
+        class="suggestion"
+        type="button"
+        on:click={() => send({ type: 'SUBMIT', suggestion })}
+        on:mouseenter={() => send({ type: 'HIGHLIGHT', suggestion })}
+        style:font-weight={$state.context.highlightedSuggestion === suggestion
+          ? 'bold'
+          : 'normal'}
+      >
+        {suggestion}
+      </button>
+    {/each}
+  </ul>
+{/if}
 
-  result: {result}
-</ul>
-
-<style>
-  .suggestion {
-    border: none;
-    background: none;
-  }
-</style>
+result: {result}
