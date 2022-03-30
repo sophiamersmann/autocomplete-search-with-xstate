@@ -4,6 +4,7 @@
   import { getContext } from 'svelte';
 
   interface AutocompleteSearchContext {
+    inputValue: string;
     suggestions: string[];
     highlightedSuggestion: string;
     selected: string;
@@ -28,6 +29,7 @@
       id: 'autocomplete-search',
       initial: 'idle',
       context: {
+        inputValue: '',
         suggestions: [],
         highlightedSuggestion: '',
         selected: '',
@@ -64,7 +66,7 @@
               actions: 'assignSuggestionsToContext',
             },
           },
-          entry: ['clearSelection'],
+          entry: ['clearSelection', 'assignInputValueToContext'],
         },
         display_suggestions: {
           on: {
@@ -111,11 +113,18 @@
       actions: {
         assignResultToContext: assign((context, event) => {
           if (event.type !== 'SUBMIT') return;
-          if (event.suggestion) return { selected: event.suggestion };
+          if (event.suggestion)
+            return { selected: event.suggestion, inputValue: event.suggestion };
           if (context.highlightedSuggestion)
-            return { selected: context.highlightedSuggestion };
+            return {
+              selected: context.highlightedSuggestion,
+              inputValue: context.highlightedSuggestion,
+            };
           if (context.suggestions && context.suggestions.length > 0)
-            return { selected: context.suggestions[0] };
+            return {
+              selected: context.suggestions[0],
+              inputValue: context.suggestions[0],
+            };
           return {
             selected: '',
           };
@@ -131,6 +140,12 @@
             highlightedSuggestion: event.suggestion,
           };
         }),
+        assignInputValueToContext: assign((_, event) => {
+          if (event.type !== 'SEARCH') return;
+          return {
+            inputValue: event.query,
+          };
+        }),
         clearSelection: assign(() => {
           return {
             highlightedSuggestion: '',
@@ -142,6 +157,7 @@
             suggestions: [],
             highlightedSuggestion: '',
             selected: '',
+            inputValue: '',
           };
         }),
       },
@@ -169,7 +185,10 @@
   }}
   on:reset={() => send('CANCEL')}
 >
-  <input on:input={(e) => send({ type: 'SEARCH', query: e.target.value })} />
+  <input
+    value={$state.context.inputValue}
+    on:input={(e) => send({ type: 'SEARCH', query: e.target.value })}
+  />
   <button type="submit">submit</button>
   <button type="reset">reset</button>
 </form>
