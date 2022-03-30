@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createMachine, assign } from 'xstate';
   import { useMachine } from '@xstate/svelte';
-  import { getContext } from 'svelte';
 
   interface AutocompleteSearchContext {
     inputValue: string;
@@ -162,7 +161,10 @@
         }),
       },
       guards: {
-        isNonEmptyQuery: (_, event) => event.query && event.query.length > 0,
+        isNonEmptyQuery: (_, event) => {
+          if (event.type !== 'SEARCH') return;
+          return event.query && event.query.length > 0;
+        },
       },
     }
   );
