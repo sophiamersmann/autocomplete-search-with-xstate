@@ -5,8 +5,8 @@
   interface AutocompleteSearchContext {
     inputValue: string;
     suggestions: string[];
-    highlightedSuggestion: string;
-    selectedValue: string;
+    highlightedSuggestion: string | null;
+    selectedValue: string | null;
   }
 
   type SEARCH_EVENT = { type: 'SEARCH'; query: string };
