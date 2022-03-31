@@ -6,7 +6,7 @@
     inputValue: string;
     suggestions: string[];
     highlightedSuggestion: string;
-    selected: string;
+    selectedValue: string;
   }
 
   type SEARCH_EVENT = { type: 'SEARCH'; query: string };
@@ -23,7 +23,7 @@
   const SEARCH = {
     target: 'debouncing',
     cond: 'isNonEmptyQuery',
-    actions: 'assignInputValueToContext',
+    actions: 'updateQuery',
   };
 
   const autocompleteSearchMachine = createMachine<
@@ -36,19 +36,19 @@
       context: {
         inputValue: '',
         suggestions: [],
-        highlightedSuggestion: '',
-        selected: '',
+        highlightedSuggestion: null,
+        selectedValue: null,
       },
       states: {
         idle: {
           on: { SEARCH },
-          entry: ['clearContext'],
+          entry: ['clear'],
         },
         debouncing: {
           on: {
             SEARCH: {
               target: 'debouncing',
-              actions: 'assignInputValueToContext',
+              actions: 'updateQuery',
             },
             CANCEL: 'idle',
           },
@@ -65,21 +65,21 @@
             src: 'fetchSuggestions',
             onDone: {
               target: 'suggesting',
-              actions: 'assignSuggestionsToContext',
+              actions: 'updateSuggestions',
             },
           },
-          entry: ['clearSelection', 'assignInputValueToContext'],
+          entry: ['clearSelection', 'updateQuery'],
         },
         suggesting: {
           on: {
             SEARCH: [SEARCH, 'idle'],
             HIGHLIGHT: {
               target: 'suggesting',
-              actions: 'assignHighlightedSuggestionToContext',
+              actions: 'updateHighlightedSuggestion',
             },
             SUBMIT: {
               target: 'suggesting',
-              actions: 'assignResultToContext',
+              actions: 'updateSelectedValue',
             },
             CANCEL: 'idle',
           },
@@ -103,36 +103,39 @@
           ),
       },
       actions: {
-        assignResultToContext: assign((context, event) => {
+        updateSelectedValue: assign((context, event) => {
           if (event.type !== 'SUBMIT') return;
           if (event.suggestion)
-            return { selected: event.suggestion, inputValue: event.suggestion };
+            return {
+              selectedValue: event.suggestion,
+              inputValue: event.suggestion,
+            };
           if (context.highlightedSuggestion)
             return {
-              selected: context.highlightedSuggestion,
+              selectedValue: context.highlightedSuggestion,
               inputValue: context.highlightedSuggestion,
             };
           if (context.suggestions && context.suggestions.length > 0)
             return {
-              selected: context.suggestions[0],
+              selectedValue: context.suggestions[0],
               inputValue: context.suggestions[0],
             };
           return {
-            selected: '',
+            selectedValue: '',
           };
         }),
-        assignSuggestionsToContext: assign((_, event) => {
+        updateSuggestions: assign((_, event) => {
           return {
             suggestions: event.data,
           };
         }),
-        assignHighlightedSuggestionToContext: assign((_, event) => {
+        updateHighlightedSuggestion: assign((_, event) => {
           if (event.type !== 'HIGHLIGHT') return;
           return {
             highlightedSuggestion: event.suggestion,
           };
         }),
-        assignInputValueToContext: assign((_, event) => {
+        updateQuery: assign((_, event) => {
           if (event.type !== 'SEARCH') return;
           return {
             inputValue: event.query,
@@ -140,15 +143,15 @@
         }),
         clearSelection: assign(() => {
           return {
-            highlightedSuggestion: '',
-            selected: '',
+            highlightedSuggestion: null,
+            selectedValue: null,
           };
         }),
-        clearContext: assign(() => {
+        clear: assign(() => {
           return {
             suggestions: [],
-            highlightedSuggestion: '',
-            selected: '',
+            highlightedSuggestion: null,
+            selectedValue: null,
             inputValue: '',
           };
         }),
@@ -164,7 +167,7 @@
 
   const { state, send } = useMachine(autocompleteSearchMachine);
 
-  $: result = $state.context.selected;
+  $: selectedValue = $state.context.selectedValue;
 </script>
 
 <pre>{JSON.stringify(
@@ -188,7 +191,7 @@
   <button type="reset">reset</button>
 </form>
 
-{#if !$state.context.selected}
+{#if !$state.context.selectedValue}
   <ul>
     {#each $state.context.suggestions as suggestion}
       <button
@@ -206,4 +209,4 @@
   </ul>
 {/if}
 
-result: {result}
+selectedValue: {selectedValue}
