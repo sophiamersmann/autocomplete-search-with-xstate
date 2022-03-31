@@ -37,17 +37,30 @@
         idle: {
           on: {
             SEARCH: {
-              target: 'search',
+              target: 'debouncing',
               cond: 'isNonEmptyQuery',
             },
           },
           entry: ['clearContext'],
         },
+        debouncing: {
+          on: {
+            SEARCH: {
+              target: 'debouncing',
+              actions: 'assignInputValueToContext',
+            },
+          },
+          after: {
+            300: {
+              target: 'search',
+            },
+          },
+        },
         search: {
           on: {
             SEARCH: [
               {
-                target: 'search',
+                target: 'debouncing',
                 cond: 'isNonEmptyQuery',
               },
               {
@@ -71,7 +84,7 @@
           on: {
             SEARCH: [
               {
-                target: 'search',
+                target: 'debouncing',
                 cond: 'isNonEmptyQuery',
               },
               {
@@ -95,15 +108,15 @@
     },
     {
       services: {
-        fetchSuggestions: (_, event: SEARCH_EVENT) =>
+        fetchSuggestions: (context, _) =>
           new Promise((resolve, _) =>
             setTimeout(
               () =>
                 resolve([
-                  event.query,
-                  event.query + '-1',
-                  event.query + '-2',
-                  event.query + '-3',
+                  context.inputValue,
+                  context.inputValue + '-1',
+                  context.inputValue + '-2',
+                  context.inputValue + '-3',
                 ]),
               1000
             )
