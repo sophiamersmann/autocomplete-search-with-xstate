@@ -50,6 +50,7 @@
               target: 'debouncing',
               actions: 'assignInputValueToContext',
             },
+            CANCEL: 'idle',
           },
           after: {
             300: 'searching',
