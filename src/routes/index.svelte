@@ -20,6 +20,12 @@
     | SUBMIT_EVENT
     | CANCEL_EVENT;
 
+  const SEARCH = {
+    target: 'debouncing',
+    cond: 'isNonEmptyQuery',
+    actions: 'assignInputValueToContext',
+  };
+
   const autocompleteSearchMachine = createMachine<
     AutocompleteSearchContext,
     AutocompleteSearchEvent
@@ -35,12 +41,7 @@
       },
       states: {
         idle: {
-          on: {
-            SEARCH: {
-              target: 'debouncing',
-              cond: 'isNonEmptyQuery',
-            },
-          },
+          on: { SEARCH },
           entry: ['clearContext'],
         },
         debouncing: {
@@ -51,57 +52,35 @@
             },
           },
           after: {
-            300: {
-              target: 'search',
-            },
+            300: 'searching',
           },
         },
-        search: {
+        searching: {
           on: {
-            SEARCH: [
-              {
-                target: 'debouncing',
-                cond: 'isNonEmptyQuery',
-              },
-              {
-                target: 'idle',
-              },
-            ],
-            CANCEL: {
-              target: 'idle',
-            },
+            SEARCH: [SEARCH, 'idle'],
+            CANCEL: 'idle',
           },
           invoke: {
             src: 'fetchSuggestions',
             onDone: {
-              target: 'display_suggestions',
+              target: 'suggesting',
               actions: 'assignSuggestionsToContext',
             },
           },
           entry: ['clearSelection', 'assignInputValueToContext'],
         },
-        display_suggestions: {
+        suggesting: {
           on: {
-            SEARCH: [
-              {
-                target: 'debouncing',
-                cond: 'isNonEmptyQuery',
-              },
-              {
-                target: 'idle',
-              },
-            ],
+            SEARCH: [SEARCH, 'idle'],
             HIGHLIGHT: {
-              target: 'display_suggestions',
+              target: 'suggesting',
               actions: 'assignHighlightedSuggestionToContext',
             },
             SUBMIT: {
-              target: 'display_suggestions',
+              target: 'suggesting',
               actions: 'assignResultToContext',
             },
-            CANCEL: {
-              target: 'idle',
-            },
+            CANCEL: 'idle',
           },
         },
       },
